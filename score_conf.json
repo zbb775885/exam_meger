@@ -1,0 +1,40 @@
+{
+  "score_attr": [
+    {
+      "subject": "语文",
+      "is_main": true
+    },
+     {
+      "subject": "数学",
+      "is_main": true
+    },
+    {
+      "subject": "英语",
+      "is_main": true
+    },
+    {
+      "subject": "物理",
+      "is_main": false
+    },
+    {
+      "subject": "化学",
+      "is_main": false
+    },
+    {
+      "subject": "生物",
+      "is_main": false
+    },
+    {
+      "subject": "政治",
+      "is_main": false
+    },
+    {
+      "subject": "历史",
+      "is_main": false
+    },
+     {
+      "subject": "地理",
+      "is_main": false
+    }
+  ]
+}
