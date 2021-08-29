@@ -4,13 +4,10 @@ import execl_read
 import execl_write
 import gen_format
 import json_reader
+import copy
 
 
 class ScoreAttr:
-    value_ = 0
-    subject_ = ""
-    is_main_ = True
-
     # 定义分数
     def __init__(self):
         self.value_ = 0
@@ -33,18 +30,17 @@ class ScoreAttr:
 
 
 class ExamAttr:
-    score_attr_map_ = {}
-    score_total_main_ = 0
-    score_total_ = 0
-    class_rank_ = 0
-
     # 定义属性类
     def __init__(self):
+        self.score_attr_map_ = {}
+        self.score_total_main_ = 0
+        self.score_total_ = 0
+        self.class_rank_ = 0
         self.score_attr_map_ = {}
 
     # 定义分数属性
     def set_score_attr(self, score_attr):
-        self.score_attr_map_ = score_attr
+        self.score_attr_map_ = copy.deepcopy(score_attr)
 
     # 定义分数属性
     def get_score_attr(self):
@@ -79,15 +75,14 @@ class ExamAttr:
 
 # 定义子类
 class Student:
-    score_attr_map_save_ = {}
-    exam_attr_map_ = {}
-    name_ = ""
-    gender_ = ""
-    class_ = int(0)
-    number_ = int(0)
-
     # 定义学生对象
     def __init__(self, score_conf_json):
+        self.score_attr_map_save_ = {}
+        self.exam_attr_map_ = {}
+        self.name_ = ""
+        self.gender_ = ""
+        self.class_ = int(0)
+        self.number_ = int(0)
         # 读取分数属性
         json_score_conf = json_reader.read_file(score_conf_json)
         for subject_attr in json_score_conf["score_attr"]:
@@ -96,7 +91,7 @@ class Student:
 
     # 增加单次考试信息
     def add_exam_attr(self, exam_name, exam_attr):
-        self.exam_attr_map_[exam_name] = exam_attr
+        self.exam_attr_map_[exam_name] = copy.deepcopy(exam_attr)
 
     # 获取单次考试信息
     def get_exam_attr(self, exam_name):
@@ -104,13 +99,13 @@ class Student:
 
 
 def read_student_exam_infos(student_map, excel_files):
-    # 遍历配置的excel文件
     for excel_file in excel_files:
         # 读取excel文件的一个sheet
         excel_reader = execl_read.Reader(excel_file)
         sheet = excel_reader.read_excel_sheet()
         # 每一列的主题
         column_topic_map = {}
+        count = 0
         for row in range(sheet.nrows):  # 循环读取表格内容（每次读取一行数据）
             cells = sheet.row_values(row)  # 每行数据赋值给cells
             # 第一行则提取key值
@@ -120,10 +115,12 @@ def read_student_exam_infos(student_map, excel_files):
                     column_topic_map[topic] = column
                     column += 1
             else:
-                if not cells[column_topic_map["姓名"]] in student_map:
-                    student_map[cells[column_topic_map["姓名"]]] = Student("score_conf.json")
-
+                if not cells[column_topic_map["姓名"]] in student_map.keys():
+                    student_map[cells[column_topic_map["姓名"]]] = copy.deepcopy(Student("score_conf.json"))
+                else:
+                    student = ""
                 student = student_map[cells[column_topic_map["姓名"]]]
+
                 # 读取每个学生的分数信息
                 exam_attr = ExamAttr()
                 exam_attr.set_score_attr(student.score_attr_map_save_)
@@ -135,6 +132,7 @@ def read_student_exam_infos(student_map, excel_files):
                 exam_attr.score_total_main_ = cells[column_topic_map["语数英"]]
                 exam_attr.class_rank_ = cells[column_topic_map["年名"]]
                 exam_name = excel_file.split(".")[0]
+                last_exam_name = exam_name
                 student.add_exam_attr(exam_name, exam_attr)
                 # 班级	号次		班名	 XM	年名	语数英		YSY年
                 # 班级	号次	姓名	性别	语文	数学	英语	物理	化学	生物	政治	历史	地理	总分	班名	XM	年名	语数英	YSY班	YSYXM	YSY年
@@ -143,16 +141,10 @@ def read_student_exam_infos(student_map, excel_files):
                 student.class_ = cells[column_topic_map["班级"]]
                 student.number_ = cells[column_topic_map["号次"]]
 
-                if "王之凯" == student.name_ and "高一上期末" != exam_name and "高一上期末" in student_map[student.name_].exam_attr_map_:
-                    print(student_map[student.name_].number_, " 111语文  ", "高一上期末", " ",
-                          student_map[student.name_].get_exam_attr("高一上期末").get_score("语文"),
-                          len(student_map[student.name_].get_exam_attr("高一上期末").score_attr_map_));
-                    # print(student.number_, " 语文  ", exam_name, " ", student.get_exam_attr(exam_name).get_score("语文"));
-
-    for exam_name in student_map["王之凯"].exam_attr_map_.keys():
-        student = student_map["王之凯"]
-        print(student.number_, " 语文  ", exam_name, " ", student.get_exam_attr(exam_name).get_score("语文"),
-              student.get_exam_attr(exam_name).score_attr_map_["语文"].value_);
+                # print(student_map[student.name_].number_, " 111语文  ", exam_name, " ",
+                #       student_map[student.name_].get_exam_attr(exam_name).get_score("语文"),
+                #       len(student_map[student.name_].get_exam_attr(exam_name).score_attr_map_));
+                # print(student.number_, " 语文  ", exam_name, " ", student.get_exam_attr(exam_name).get_score("语文"));
 
 
 def write_student_exam_infos_to_excel(student_map, title):
@@ -165,7 +157,7 @@ def write_student_exam_infos_to_excel(student_map, title):
     student_map_sorted = sorted(student_map.items(), key=lambda student_item: student_item[1].class_)
     for student_pair in student_map_sorted:
         student = student_pair[1]
-        # print(student.number_, " 语文  ", "高一上期中", " ", student.get_exam_attr("高一上期中").get_score("语文"));
+        #print(student.number_, " 语文  ", "高一上期中", " ", student.get_exam_attr("高一上期中").get_score("语文"));
         column = 0;
         column_len = len(student.score_attr_map_save_) * 3 + 9
         writer.write_excel_sheet(sheet, row, row, 0, column_len - 1, title)
@@ -255,8 +247,6 @@ if __name__ == '__main__':
 
     student_map = {}
     read_student_exam_infos(student_map, excel_files)
-    student = student_map["王之凯"]
-    print(student.number_, " 语文  ", "高一上期中", " ", student.get_exam_attr("高一上期中").get_score("语文"));
 
     title = json_excel_files["format"]["title"]
     write_student_exam_infos_to_excel(student_map, title)
