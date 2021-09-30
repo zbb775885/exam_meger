@@ -13,16 +13,27 @@ class ScoreAttr:
         self.value_ = 0
         self.subject_ = ""
         self.is_main_ = True
+        self.rank_=0
+        self.assign_value = 0
+        self.level=""
+        self.level_map = {}
 
     # 定义分数
     def __init__(self, value, subject, is_main):
         self.value_ = value
         self.subject_ = subject
         self.is_main_ = is_main
+        self.rank_ = 0
+        self.assign_value = 0
+        self.level = ""
+        self.level_map = {}
 
     # 设置分数
     def set_score(self, score):
         self.value_ = score
+        for level,range in self.level_map:
+            if score >= range[0] and score <= range[1]:
+                self.level = level
 
     # 获取分数
     def get_score(self):
@@ -35,8 +46,7 @@ class ExamAttr:
         self.score_attr_map_ = {}
         self.score_total_main_ = 0
         self.score_total_ = 0
-        self.class_rank_ = 0
-        self.score_attr_map_ = {}
+        self.score_total_class_rank_ = 0
 
     # 定义分数属性
     def set_score_attr(self, score_attr):
@@ -106,6 +116,7 @@ def read_student_exam_infos(student_map, excel_files):
         # 每一列的主题
         column_topic_map = {}
         count = 0
+        score_rank={}
         for row in range(sheet.nrows):  # 循环读取表格内容（每次读取一行数据）
             cells = sheet.row_values(row)  # 每行数据赋值给cells
             # 第一行则提取key值
@@ -127,10 +138,17 @@ def read_student_exam_infos(student_map, excel_files):
                 for subject in student.score_attr_map_save_.keys():
                     if subject in column_topic_map:
                         exam_attr.set_score(subject, cells[column_topic_map[subject]])
+                        #将所有的分数放入对应学科的排名表
+                        if not subject in score_rank.keys():
+                            score_rank[subject]=[]
+                        score = cells[column_topic_map[subject]]
+                        if score < 0:
+                            score = 0
+                        score_rank[subject].append(score)
 
                 exam_attr.score_total_ = cells[column_topic_map["总分"]]
                 exam_attr.score_total_main_ = cells[column_topic_map["语数英"]]
-                exam_attr.class_rank_ = cells[column_topic_map["年名"]]
+                exam_attr.score_total_class_rank_ = cells[column_topic_map["年名"]]
                 exam_name = excel_file.split(".")[0]
                 last_exam_name = exam_name
                 student.add_exam_attr(exam_name, exam_attr)
@@ -145,7 +163,21 @@ def read_student_exam_infos(student_map, excel_files):
                 #       student_map[student.name_].get_exam_attr(exam_name).get_score("语文"),
                 #       len(student_map[student.name_].get_exam_attr(exam_name).score_attr_map_));
                 # print(student.number_, " 语文  ", exam_name, " ", student.get_exam_attr(exam_name).get_score("语文"));
+        #对本次考试的各个学科做排名并将名字写入学生成绩中
+        for rank in score_rank.values():
+            #print(rank)
+            rank.sort()
+            rank.reverse()
 
+        exam_name = excel_file.split(".")[0]
+        for student in student_map.values():
+            for subject in score_rank.keys():
+                if exam_name in student.exam_attr_map_.keys():
+                    score = student.exam_attr_map_[exam_name].score_attr_map_[subject].get_score()
+                    student.exam_attr_map_[exam_name].score_attr_map_[subject].rank_ = score_rank[subject].index(score) + 1
+                #else:
+                    #student.exam_attr_map_[exam_name].score_attr_map_[subject].rank_ = len(student_map)
+                  #  #score_rank[subject].index(score)
 
 def write_student_exam_infos_to_excel(student_map, title):
     save_file = title + ".xls"
@@ -202,7 +234,7 @@ def write_student_exam_infos_to_excel(student_map, title):
             column += 1
             for key in student.score_attr_map_save_.keys():
                 writer.write_excel_sheet(sheet, row, row, column, column, exam_attr.score_attr_map_[key].get_score());
-                writer.write_excel_sheet(sheet, row, row, column + 1, column + 1, 0);
+                writer.write_excel_sheet(sheet, row, row, column + 1, column + 1, exam_attr.score_attr_map_[key].rank_);
                 writer.write_excel_sheet(sheet, row, row, column + 2, column + 2, 0);
                 column += 3
             # 总分
