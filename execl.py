@@ -45,6 +45,9 @@ class ExamAttr:
     def __init__(self):
         self.score_attr_map_ = {}
         self.score_total_main_ = 0
+        self.score_total_main_rank_ = 0
+        self.score_total_not_main_ = 0
+        self.score_total_not_main_rank_ = 0
         self.score_total_ = 0
         self.score_total_class_rank_ = 0
 
@@ -58,8 +61,8 @@ class ExamAttr:
 
     # 增加学科分数
     def set_score(self, subject, score):
-        if score < 0:
-            score = 0
+       # if score < 0:
+       #     score = 0
         self.score_attr_map_[subject].set_score(score)
         # score_total = 0
         # score_total_main = 0
@@ -137,18 +140,24 @@ def read_student_exam_infos(student_map, excel_files):
                 exam_attr.set_score_attr(student.score_attr_map_save_)
                 for subject in student.score_attr_map_save_.keys():
                     if subject in column_topic_map:
-                        exam_attr.set_score(subject, cells[column_topic_map[subject]])
+                        if "" != cells[column_topic_map[subject]]:
+                            exam_attr.set_score(subject, cells[column_topic_map[subject]])
+                        else:
+                            exam_attr.set_score(subject, -10)
                         #将所有的分数放入对应学科的排名表
                         if not subject in score_rank.keys():
                             score_rank[subject]=[]
                         score = cells[column_topic_map[subject]]
-                        if score < 0:
-                            score = 0
+                        if "" == cells[column_topic_map[subject]] or score < 0:
+                            score = -10
                         score_rank[subject].append(score)
 
                 exam_attr.score_total_ = cells[column_topic_map["总分"]]
                 exam_attr.score_total_main_ = cells[column_topic_map["语数英"]]
+                exam_attr.score_total_main_rank_ = cells[column_topic_map["语数英名"]]
                 exam_attr.score_total_class_rank_ = cells[column_topic_map["年名"]]
+                exam_attr.score_total_not_main_ = cells[column_topic_map["7选3"]]
+                exam_attr.score_total_not_main_rank_ = cells[column_topic_map["7选3名"]]
                 exam_name = excel_file.split(".")[0]
                 last_exam_name = exam_name
                 student.add_exam_attr(exam_name, exam_attr)
@@ -191,7 +200,7 @@ def write_student_exam_infos_to_excel(student_map, title):
         student = student_pair[1]
         #print(student.number_, " 语文  ", "高一上期中", " ", student.get_exam_attr("高一上期中").get_score("语文"));
         column = 0;
-        column_len = len(student.score_attr_map_save_) * 3 + 9
+        column_len = len(student.score_attr_map_save_) * 2 + 9
         writer.write_excel_sheet(sheet, row, row, 0, column_len - 1, title)
 
         row += 1
@@ -199,11 +208,12 @@ def write_student_exam_infos_to_excel(student_map, title):
         writer.write_excel_sheet(sheet, row, row + 1, column + 1, column + 1, "姓名");
         column += 2
         for key in student.score_attr_map_save_.keys():
-            writer.write_excel_sheet(sheet, row, row, column, column + 2, key + "/" + str(len(student_map)));
+            writer.write_excel_sheet(sheet, row, row, column, column + 1, key + "/" + str(len(student_map)));
             writer.write_excel_sheet(sheet, row + 1, row + 1, column, column, "成绩");
             writer.write_excel_sheet(sheet, row + 1, row + 1, column + 1, column + 1, "名次");
-            writer.write_excel_sheet(sheet, row + 1, row + 1, column + 2, column + 2, "等第");
-            column += 3
+            #writer.write_excel_sheet(sheet, row + 1, row + 1, column + 2, column + 2, "等第");
+            #writer.write_excel_sheet(sheet, row + 1, row + 1, column + 2, column + 2, "");
+            column += 2
 
         writer.write_excel_sheet(sheet, row, row, column, column + 1, "总分");
         writer.write_excel_sheet(sheet, row + 1, row + 1, column, column, "成绩");
@@ -233,26 +243,27 @@ def write_student_exam_infos_to_excel(student_map, title):
             writer.write_excel_sheet(sheet, row, row, column, column, student.name_)
             column += 1
             for key in student.score_attr_map_save_.keys():
-                writer.write_excel_sheet(sheet, row, row, column, column, exam_attr.score_attr_map_[key].get_score());
-                writer.write_excel_sheet(sheet, row, row, column + 1, column + 1, exam_attr.score_attr_map_[key].rank_);
-                writer.write_excel_sheet(sheet, row, row, column + 2, column + 2, 0);
-                column += 3
+                if exam_attr.score_attr_map_[key].get_score() >= 0:
+                    writer.write_excel_sheet(sheet, row, row, column, column, exam_attr.score_attr_map_[key].get_score());
+                    writer.write_excel_sheet(sheet, row, row, column + 1, column + 1, exam_attr.score_attr_map_[key].rank_);
+                #writer.write_excel_sheet(sheet, row, row, column + 2, column + 2, 0);
+                column += 2
             # 总分
             writer.write_excel_sheet(sheet, row, row, column, column, int(exam_attr.score_total_));
             column += 1
-            writer.write_excel_sheet(sheet, row, row, column, column, int(0));
+            writer.write_excel_sheet(sheet, row, row, column, column, int(exam_attr.score_total_class_rank_));
             column += 1
 
             # 语数英
             writer.write_excel_sheet(sheet, row, row, column, column, int(exam_attr.score_total_main_));
             column += 1
-            writer.write_excel_sheet(sheet, row, row, column, column, int(0));
+            writer.write_excel_sheet(sheet, row, row, column, column, int(exam_attr.score_total_main_rank_));
             column += 1
 
             # 7选3
-            writer.write_excel_sheet(sheet, row, row, column, column, int(exam_attr.score_total_));
+            writer.write_excel_sheet(sheet, row, row, column, column, int(exam_attr.score_total_not_main_));
             column += 1
-            writer.write_excel_sheet(sheet, row, row, column, column, int(0));
+            writer.write_excel_sheet(sheet, row, row, column, column, int(exam_attr.score_total_not_main_rank_));
             column += 1
 
             # 考试名
