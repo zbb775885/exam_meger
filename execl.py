@@ -288,15 +288,28 @@ def write_student_exam_infos_to_excel(student_map, title):
                         writer.write_excel_sheet(sheet, row, row, column, column, exam_attr.score_attr_map_[key].get_score());
                         if exam_attr.score_attr_map_[key].rank_ > 0:
                             writer.write_excel_sheet(sheet, row, row, column + 1, column + 1, exam_attr.score_attr_map_[key].rank_);
-                    #writer.write_excel_sheet(sheet, row, row, column + 2, column + 2, 0);
+                        else:
+                            writer.write_excel_sheet(sheet, row, row, column + 1, column + 1, "  ");
+                    else:
+                        writer.write_excel_sheet(sheet, row, row, column, column, "  ");
+                        writer.write_excel_sheet(sheet, row, row, column + 1, column + 1, "  ");
                     column += 2
                 else:
+
                     if exam_attr.score_attr_map_[key].get_score() >= 0:
                         writer.write_excel_sheet(sheet, row, row, column, column, exam_attr.score_attr_map_[key].get_score());
                         if exam_attr.score_attr_map_[key].rank_ > 0:
                             writer.write_excel_sheet(sheet, row, row, column + 1, column + 1, exam_attr.score_attr_map_[key].rank_);
+                        else:
+                            writer.write_excel_sheet(sheet, row, row, column + 1, column + 1,"  ");
                         if exam_attr.score_attr_map_[key].assign_value_ > 0:
-                            writer.write_excel_sheet(sheet, row, row, column + 2, column + 2, exam_attr.score_attr_map_[key].assign_value_);
+                            writer.write_excel_sheet_bold(sheet, row, row, column + 2, column + 2, exam_attr.score_attr_map_[key].assign_value_);
+                        else:
+                            writer.write_excel_sheet_bold(sheet, row, row, column + 2, column + 2,"  ");
+                    else:
+                        writer.write_excel_sheet(sheet, row, row, column, column, "  ");
+                        writer.write_excel_sheet(sheet, row, row, column + 1, column + 1, "  ");
+                        writer.write_excel_sheet(sheet, row, row, column + 2, column + 2, "  ");
                     column += 3
             # 总分
             writer.write_excel_sheet(sheet, row, row, column, column, exam_attr.score_total_);
