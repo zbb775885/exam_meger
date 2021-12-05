@@ -144,7 +144,7 @@ def read_student_exam_infos(student_map, excel_files):
                     column += 1
             else:
                 if not cells[column_topic_map["姓名"]] in student_map.keys():
-                    student_map[cells[column_topic_map["姓名"]]] = copy.deepcopy(Student("score_conf.json"))
+                    student_map[cells[column_topic_map["姓名"]]] = copy.deepcopy(Student("./score_conf.json"))
                 else:
                     student = ""
                 student = student_map[cells[column_topic_map["姓名"]]]
@@ -190,10 +190,25 @@ def read_student_exam_infos(student_map, excel_files):
                 student.add_exam_attr(exam_name, exam_attr)
                 # 班级	号次		班名	 XM	年名	语数英		YSY年
                 # 班级	号次	姓名	性别	语文	数学	英语	物理	化学	生物	政治	历史	地理	总分	班名	XM	年名	语数英	YSY班	YSYXM	YSY年
-                student.name_ = cells[column_topic_map["姓名"]]
-                student.gender_ = cells[column_topic_map["性别"]]
-                student.class_ = cells[column_topic_map["班级"]]
-                student.number_ = cells[column_topic_map["号次"]]
+                if "姓名" in column_topic_map.keys():
+                    student.name_ = cells[column_topic_map["姓名"]]
+                else:
+                    student.name_ = "未知"
+
+                if "性别" in column_topic_map.keys() :
+                    student.gender_ = cells[column_topic_map["性别"]]
+                else:
+                    student.gender_ = "未知"
+
+                if "班级" in column_topic_map.keys():
+                    student.class_ = cells[column_topic_map["班级"]]
+                else:
+                    student.class_ = "未知"
+
+                if "号次" in column_topic_map.keys():
+                    student.number_ = cells[column_topic_map["号次"]]
+                else:
+                    student.number_ = "未知"
 
                 # print(student_map[student.name_].number_, " 111语文  ", exam_name, " ",
                 #       student_map[student.name_].get_exam_attr(exam_name).get_score("语文"),
@@ -347,7 +362,7 @@ def write_student_exam_infos_to_excel(student_map, title):
 
 if __name__ == '__main__':
     excel_files = []
-    json_excel_files = json_reader.read_file("format_conf.json")
+    json_excel_files = json_reader.read_file("./format_conf.json")
     excel_files = json_excel_files["excel_files"]
     print(excel_files)
 
